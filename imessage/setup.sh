@@ -3,7 +3,7 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: setup.sh [--config <path>] [--state-dir <path>]
+Usage: setup.sh [--config <path>] [--state-dir <path>] [--no-db-check]
 
 Configures OpenClaw iMessage to use this skill's native poller + converter runtime.
 EOF
@@ -12,6 +12,7 @@ EOF
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 STATE_DIR="${OPENCLAW_STATE_DIR:-$HOME/.openclaw}"
 CONFIG_PATH="${OPENCLAW_CONFIG_PATH:-$STATE_DIR/openclaw.json}"
+CHECK_DB_ACCESS=1
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -22,6 +23,10 @@ while [[ $# -gt 0 ]]; do
     --state-dir)
       STATE_DIR="${2:-}"
       shift 2
+      ;;
+    --no-db-check)
+      CHECK_DB_ACCESS=0
+      shift
       ;;
     -h|--help)
       usage
@@ -117,6 +122,36 @@ console.log(`iMessage cliPath -> ${cliPath}`);
 NODE
 
 "$NATIVE_CLIENT" rpc --help >/dev/null
+
+DB_PATH="$(CONFIG_PATH="$CONFIG_PATH" node <<'NODE'
+const fs = require("fs");
+const p = process.env.CONFIG_PATH;
+try {
+  const cfg = JSON.parse(fs.readFileSync(p, "utf8"));
+  const dbPath = cfg?.channels?.imessage?.accounts?.default?.dbPath || "";
+  process.stdout.write(String(dbPath));
+} catch {
+  process.stdout.write("");
+}
+NODE
+)"
+
+if [[ "$CHECK_DB_ACCESS" == "1" && -n "$DB_PATH" ]]; then
+  if ! DB_CHECK_ERR="$(/usr/bin/sqlite3 "$DB_PATH" "SELECT 1;" 2>&1 >/dev/null)"; then
+    echo "" >&2
+    echo "WARNING: Cannot read iMessage database: $DB_PATH" >&2
+    echo "sqlite3 error: $DB_CHECK_ERR" >&2
+    echo "" >&2
+    echo "Fix permissions in macOS Privacy & Security:" >&2
+    echo "1) Full Disk Access -> your terminal app (Terminal/iTerm)" >&2
+    echo "2) Accessibility -> your terminal app (Terminal/iTerm)" >&2
+    echo "" >&2
+    echo "If gateway runs as LaunchAgent, grant Full Disk Access to its runtime too (usually node)." >&2
+    echo "Inspect with:" >&2
+    echo "  launchctl print \"gui/$(id -u)/ai.openclaw.gateway\" | grep -A4 ProgramArguments" >&2
+    echo "" >&2
+  fi
+fi
 
 cat <<EOF
 Done.

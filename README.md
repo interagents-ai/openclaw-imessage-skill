@@ -5,14 +5,14 @@ Public distribution of the OpenClaw iMessage skill used in Interagents environme
 ## Contents
 
 - `imessage/` - skill source folder (drop-in for `~/.openclaw/skills/imessage`)
-- `dist/imessage-1.0.2.skill` - installable skill bundle
-- `dist/imessage-1.0.2.skill.sha256` - checksum
+- `dist/imessage-1.0.3.skill` - installable skill bundle
+- `dist/imessage-1.0.3.skill.sha256` - checksum
 
 ## Install on another Mac
 
 ```bash
 mkdir -p ~/.openclaw/skills
-unzip -o dist/imessage-1.0.2.skill -d ~/.openclaw/skills
+unzip -o dist/imessage-1.0.3.skill -d ~/.openclaw/skills
 ~/.openclaw/skills/imessage/setup.sh
 openclaw skills info imessage
 ```
@@ -20,8 +20,8 @@ openclaw skills info imessage
 ## Verify bundle integrity
 
 ```bash
-shasum -a 256 dist/imessage-1.0.2.skill
-cat dist/imessage-1.0.2.skill.sha256
+shasum -a 256 dist/imessage-1.0.3.skill
+cat dist/imessage-1.0.3.skill.sha256
 ```
 
 ## Requirements

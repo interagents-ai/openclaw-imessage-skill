@@ -47,8 +47,8 @@ The Mac must grant these permissions to **Terminal** (or your shell app):
 
 ```bash
 mkdir -p ~/.openclaw/skills
-curl -L -o /tmp/imessage-1.0.2.skill https://github.com/interagents-ai/openclaw-imessage-skill/releases/download/v1.0.2/imessage-1.0.2.skill
-unzip -o /tmp/imessage-1.0.2.skill -d ~/.openclaw/skills
+curl -fL -o /tmp/imessage-1.0.3.skill https://github.com/interagents-ai/openclaw-imessage-skill/releases/download/v1.0.3/imessage-1.0.3.skill
+unzip -o /tmp/imessage-1.0.3.skill -d ~/.openclaw/skills
 ```
 
 ### 2. Configure runtime (poller + converter)
@@ -249,6 +249,12 @@ osascript -e 'tell application "Messages" to send "Test" to buddy "+1234567890"'
 **Cause:** Terminal doesn't have Full Disk Access
 
 **Fix:** System Settings → Privacy & Security → Full Disk Access → Enable for Terminal.app
+
+### "authorization denied" for `chat.db`
+
+**Cause:** macOS privacy (TCC) still blocks `sqlite3` access.
+
+**Fix:** Grant Full Disk Access to terminal app, and if using LaunchAgent gateway also grant it to the runtime binary (usually `node`). Then restart gateway.
 
 ### "Messages got an error: Can't send message"
 
