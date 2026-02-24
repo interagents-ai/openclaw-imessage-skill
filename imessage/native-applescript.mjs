@@ -251,6 +251,15 @@ function safeFileNameFragment(value) {
     .replace(/^_+|_+$/g, "");
 }
 
+function resolveLocalSkillPath(fileName) {
+  try {
+    const thisFile = decodeURIComponent(new URL(import.meta.url).pathname);
+    return path.join(path.dirname(thisFile), fileName);
+  } catch {
+    return "";
+  }
+}
+
 async function maybeConvertHeicToJpeg(inputPath, attachmentId) {
   const p = String(inputPath || "").trim();
   if (!p) return null;
@@ -278,7 +287,28 @@ async function maybeConvertHeicToJpeg(inputPath, attachmentId) {
     const st = await fs.stat(outPath);
     if (st.isFile() && st.size > 0) return outPath;
   } catch {
-    return null;
+    // Fall through to alternate converters.
+  }
+
+  // Fallback 1: skill-bundled converter script (ImageMagick-based)
+  const converterScript = resolveLocalSkillPath("convert-heic.sh");
+  if (converterScript) {
+    try {
+      await execFile("/bin/bash", [converterScript, p, outPath, "85"], { timeout: 30_000 });
+      const st = await fs.stat(outPath);
+      if (st.isFile() && st.size > 0) return outPath;
+    } catch {
+      // Fall through to direct magick call.
+    }
+  }
+
+  // Fallback 2: direct ImageMagick invocation if available in PATH.
+  try {
+    await execFile("/usr/bin/env", ["magick", "convert", p, "-quality", "85", outPath], { timeout: 30_000 });
+    const st = await fs.stat(outPath);
+    if (st.isFile() && st.size > 0) return outPath;
+  } catch {
+    // No converter available.
   }
 
   return null;

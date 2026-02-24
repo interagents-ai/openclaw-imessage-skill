@@ -4,21 +4,35 @@
 
 1. **macOS** (10.14 or later)
 2. **Messages.app** signed in to iMessage
-3. **Homebrew** installed
+3. **OpenClaw** installed
 
-## Step 1: Install ImageMagick
+## Step 1: Install Skill Bundle
+
+```bash
+mkdir -p ~/.openclaw/skills
+curl -L -o /tmp/imessage-1.0.1.skill https://github.com/interagents-ai/openclaw-imessage-skill/releases/download/v1.0.1/imessage-1.0.1.skill
+unzip -o /tmp/imessage-1.0.1.skill -d ~/.openclaw/skills
+```
+
+## Step 2: Configure Runtime (Poller + Converter)
+
+```bash
+~/.openclaw/skills/imessage/setup.sh
+```
+
+What this does:
+- Sets `channels.imessage.accounts.default.cliPath` to `~/.openclaw/skills/imessage/native-applescript.mjs`
+- Enables iMessage channel + default account
+- Uses the built-in SQLite poller in `native-applescript.mjs`
+- Enables HEIC converter flow (`sips` first, ImageMagick fallback)
+
+If you want ImageMagick fallback converter:
 
 ```bash
 brew install imagemagick
 ```
 
-Verify installation:
-
-```bash
-magick -version
-```
-
-## Step 2: Grant Permissions
+## Step 3: Grant Permissions
 
 ### Full Disk Access
 
@@ -41,7 +55,13 @@ magick -version
 
 After granting permissions, **quit and reopen** your terminal app.
 
-## Step 3: Test the Skill
+## Step 4: Restart OpenClaw
+
+```bash
+openclaw gateway restart
+```
+
+## Step 5: Test the Skill
 
 ### Test Sending
 
@@ -63,47 +83,24 @@ Leave this running, then send yourself a message from your iPhone. You should se
 
 Press **Ctrl+C** to stop.
 
-## Step 4: Integrate with OpenClaw
-
-The native client is already integrated into OpenClaw core. To enable it:
-
-### Edit `~/.openclaw/openclaw.json`
-
-```json
-{
-  "channels": {
-    "imessage": {
-      "enabled": true,
-      "accounts": {
-        "default": {
-          "cliPath": "native-applescript",
-          "service": "auto"
-        }
-      }
-    }
-  }
-}
-```
-
-### Restart OpenClaw
-
-```bash
-openclaw gateway restart
-```
-
 ## Troubleshooting
 
 ### "Operation not permitted" when polling
 
-**Fix:** Grant Full Disk Access (Step 2) and restart terminal.
+**Fix:** Grant Full Disk Access (Step 3) and restart terminal.
 
 ### "Messages got an error"
 
-**Fix:** Grant Accessibility permission (Step 2) and restart terminal.
+**Fix:** Grant Accessibility permission (Step 3) and restart terminal.
 
 ### HEIC images not converting
 
-**Fix:** Install ImageMagick (Step 1).
+**Fix:** Install ImageMagick and rerun setup.
+
+```bash
+brew install imagemagick
+~/.openclaw/skills/imessage/setup.sh
+```
 
 ### Messages not appearing
 

@@ -1,6 +1,6 @@
 {
   "name": "imessage",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Native macOS iMessage integration using AppleScript and SQLite polling. Two-way messaging with image attachment support (HEIC auto-conversion).",
   "author": "Molty Team (Main, Parts, SD, TH)",
   "license": "MIT",
@@ -11,7 +11,7 @@
       "messages_app": "signed in to iMessage"
     },
     "brew": {
-      "imagemagick": "for HEIC image conversion"
+      "imagemagick": "optional fallback for HEIC image conversion"
     }
   },
   "permissions": {
@@ -25,6 +25,8 @@
     "README.md": "Quick start guide",
     "INSTALL.md": "Step-by-step installation",
     "client-native.mjs": "Native AppleScript client implementation",
+    "native-applescript.mjs": "JSON-RPC runtime with built-in SQLite poller",
+    "setup.sh": "Bootstrap script for OpenClaw config + runtime setup",
     "convert-heic.sh": "HEIC to JPEG conversion script",
     "examples/": "Working code examples"
   },
@@ -47,7 +49,7 @@
     "openclaw": {
       "core": "Already integrated in OpenClaw core",
       "config": {
-        "channels.imessage.accounts.default.cliPath": "native-applescript"
+        "channels.imessage.accounts.default.cliPath": "~/.openclaw/skills/imessage/native-applescript.mjs"
       }
     }
   }

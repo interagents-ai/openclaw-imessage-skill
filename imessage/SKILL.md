@@ -14,7 +14,7 @@ Full two-way iMessage integration for macOS using native AppleScript and SQLite 
 - ✅ **Image attachments** with HEIC → JPEG auto-conversion
 - ✅ **Group chat support** (detect and handle group messages)
 - ✅ **Duplicate prevention** (tracks message IDs to avoid re-processing)
-- ✅ **No Full Disk Access required** (uses AppleScript instead of file manipulation)
+- ✅ **No external iMessage CLI dependencies** (no `imsg`, no `pymobiledevice3`)
 
 ## When to Use
 
@@ -38,22 +38,28 @@ The Mac must grant these permissions to **Terminal** (or your shell app):
 ### Software
 
 - macOS (tested on macOS 14+)
-- ImageMagick (for HEIC conversion): `brew install imagemagick`
+- Optional ImageMagick fallback (HEIC conversion): `brew install imagemagick`
 - Messages.app must be signed in to iMessage
 
 ## Installation
 
-### 1. Install ImageMagick
+### 1. Install Skill Bundle
 
 ```bash
-brew install imagemagick
+mkdir -p ~/.openclaw/skills
+curl -L -o /tmp/imessage-1.0.1.skill https://github.com/interagents-ai/openclaw-imessage-skill/releases/download/v1.0.1/imessage-1.0.1.skill
+unzip -o /tmp/imessage-1.0.1.skill -d ~/.openclaw/skills
 ```
 
-### 2. Copy Native Client
+### 2. Configure runtime (poller + converter)
 
-The native client is already integrated into OpenClaw core (`/opt/homebrew/lib/node_modules/openclaw/dist/imessage/client.js`).
+```bash
+~/.openclaw/skills/imessage/setup.sh
+```
 
-This skill documents the implementation for reference and customization.
+This sets `cliPath` to this skill's `native-applescript.mjs`, which includes:
+- SQLite poller for inbound messages
+- HEIC converter (`sips`, with ImageMagick fallback)
 
 ### 3. Grant Permissions
 
@@ -73,7 +79,7 @@ This skill documents the implementation for reference and customization.
       "enabled": true,
       "accounts": {
         "default": {
-          "cliPath": "native-applescript",
+          "cliPath": "/Users/<you>/.openclaw/skills/imessage/native-applescript.mjs",
           "dbPath": null,
           "service": "auto"
         }
@@ -84,7 +90,7 @@ This skill documents the implementation for reference and customization.
 ```
 
 **Fields:**
-- `cliPath`: Set to `"native-applescript"` to use this native implementation
+- `cliPath`: Path to `native-applescript.mjs`
 - `dbPath`: Optional custom path to `chat.db` (defaults to `~/Library/Messages/chat.db`)
 - `service`: `"auto"`, `"iMessage"`, or `"SMS"` (auto-detects if omitted)
 
@@ -118,7 +124,7 @@ Polls `~/Library/Messages/chat.db` every 2 seconds using SQLite queries:
 
 **Receiving:**
 1. SQLite query includes `attachment.filename` and `attachment.mime_type`
-2. If attachment is HEIC, convert to JPEG using ImageMagick
+2. If attachment is HEIC, convert to JPEG using `sips` (and fallback to ImageMagick)
 3. Provide converted path in notification
 
 ### HEIC Conversion
@@ -129,7 +135,8 @@ When receiving HEIC images:
 # Original: ~/Library/Messages/Attachments/.../IMG_1234.heic
 # Converted: ~/.openclaw/media/inbox/converted_IMG_1234.jpg
 
-magick convert input.heic -quality 85 output.jpg
+/usr/bin/sips -s format jpeg input.heic --out output.jpg
+# Fallback (optional): magick convert input.heic -quality 85 output.jpg
 ```
 
 ## Files in This Skill
@@ -137,8 +144,10 @@ magick convert input.heic -quality 85 output.jpg
 ```
 imessage/
 ├── SKILL.md                    # This file
+├── setup.sh                    # Configure OpenClaw to use this runtime
 ├── client-native.mjs           # Native AppleScript client (reference)
 ├── convert-heic.sh             # HEIC → JPEG conversion script
+├── native-applescript.mjs      # Poller + JSON-RPC runtime used by OpenClaw
 └── examples/
     ├── send-message.mjs        # Example: Send a message
     ├── send-image.mjs          # Example: Send an image
@@ -249,12 +258,12 @@ osascript -e 'tell application "Messages" to send "Test" to buddy "+1234567890"'
 
 ### HEIC images not converting
 
-**Cause:** ImageMagick not installed or not in PATH
+**Cause:** Converter chain unavailable (`sips` failed and ImageMagick missing)
 
 **Fix:**
 ```bash
 brew install imagemagick
-which magick  # Should output /opt/homebrew/bin/magick
+which magick
 ```
 
 ### Duplicate messages on restart
@@ -315,7 +324,13 @@ const client = await createIMessageRpcClient({
 
 ## Integration with OpenClaw
 
-This implementation is already integrated into OpenClaw core. When `cliPath` is set to `"native-applescript"` in `openclaw.json`, OpenClaw automatically uses this native client instead of external CLI tools.
+Use `setup.sh` so OpenClaw points directly to this skill runtime:
+
+```bash
+~/.openclaw/skills/imessage/setup.sh
+```
+
+This sets `channels.imessage.accounts.default.cliPath` to `~/.openclaw/skills/imessage/native-applescript.mjs`.
 
 ### Message Format
 
@@ -373,7 +388,7 @@ Received messages follow OpenClaw's standard format:
 
 - Built for OpenClaw by Molty (Parts Molty, SD Molty, TH Molty, Main Molty team effort)
 - Based on macOS Messages.app and SQLite schema reverse engineering
-- HEIC conversion via ImageMagick
+- HEIC conversion via `sips` with ImageMagick fallback
 
 ## License
 
