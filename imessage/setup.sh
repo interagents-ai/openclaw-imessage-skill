@@ -103,7 +103,12 @@ if (!cfg.channels.imessage.accounts.default || typeof cfg.channels.imessage.acco
 
 cfg.channels.imessage.accounts.default.cliPath = cliPath;
 if (!cfg.channels.imessage.accounts.default.service) cfg.channels.imessage.accounts.default.service = "auto";
-if (!("dbPath" in cfg.channels.imessage.accounts.default)) cfg.channels.imessage.accounts.default.dbPath = null;
+if (
+  typeof cfg.channels.imessage.accounts.default.dbPath !== "string" ||
+  !cfg.channels.imessage.accounts.default.dbPath.trim()
+) {
+  cfg.channels.imessage.accounts.default.dbPath = `${process.env.HOME}/Library/Messages/chat.db`;
+}
 
 fs.mkdirSync(path.dirname(configPath), { recursive: true });
 fs.writeFileSync(configPath, JSON.stringify(cfg, null, 2) + "\n");

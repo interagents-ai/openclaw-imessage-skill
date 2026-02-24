@@ -10,8 +10,8 @@
 
 ```bash
 mkdir -p ~/.openclaw/skills
-curl -L -o /tmp/imessage-1.0.1.skill https://github.com/interagents-ai/openclaw-imessage-skill/releases/download/v1.0.1/imessage-1.0.1.skill
-unzip -o /tmp/imessage-1.0.1.skill -d ~/.openclaw/skills
+curl -L -o /tmp/imessage-1.0.2.skill https://github.com/interagents-ai/openclaw-imessage-skill/releases/download/v1.0.2/imessage-1.0.2.skill
+unzip -o /tmp/imessage-1.0.2.skill -d ~/.openclaw/skills
 ```
 
 ## Step 2: Configure Runtime (Poller + Converter)

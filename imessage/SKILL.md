@@ -47,8 +47,8 @@ The Mac must grant these permissions to **Terminal** (or your shell app):
 
 ```bash
 mkdir -p ~/.openclaw/skills
-curl -L -o /tmp/imessage-1.0.1.skill https://github.com/interagents-ai/openclaw-imessage-skill/releases/download/v1.0.1/imessage-1.0.1.skill
-unzip -o /tmp/imessage-1.0.1.skill -d ~/.openclaw/skills
+curl -L -o /tmp/imessage-1.0.2.skill https://github.com/interagents-ai/openclaw-imessage-skill/releases/download/v1.0.2/imessage-1.0.2.skill
+unzip -o /tmp/imessage-1.0.2.skill -d ~/.openclaw/skills
 ```
 
 ### 2. Configure runtime (poller + converter)
@@ -80,7 +80,7 @@ This sets `cliPath` to this skill's `native-applescript.mjs`, which includes:
       "accounts": {
         "default": {
           "cliPath": "/Users/<you>/.openclaw/skills/imessage/native-applescript.mjs",
-          "dbPath": null,
+          "dbPath": "/Users/<you>/Library/Messages/chat.db",
           "service": "auto"
         }
       }
