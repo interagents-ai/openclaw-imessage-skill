@@ -713,6 +713,7 @@ async function runRpcServer({ dbPath }) {
   let includeAttachments = false;
   let subscriptionId = null;
   let pollTimer = null;
+  const debugPollLogs = isTruthyEnv(process.env.OPENCLAW_IMESSAGE_DEBUG);
 
   // Track date in Apple epoch ns (BigInt).
   // Persist lastMessageTime to disk so restarts don't miss messages.
@@ -741,8 +742,10 @@ async function runRpcServer({ dbPath }) {
   }
 
   async function pollOnce() {
-    if (!subscribed) { logErr("[poll] not subscribed, skipping"); return; }
-    logErr(`[poll] polling (lastMessageTime=${lastMessageTime.toString()})`);
+    if (!subscribed) return;
+    if (debugPollLogs) {
+      logErr(`[poll] polling (lastMessageTime=${lastMessageTime.toString()})`);
+    }
 
     const query = buildPollQuery({ lastMessageTime, includeAttachments });
     let stdout = "";
@@ -902,7 +905,9 @@ async function runRpcServer({ dbPath }) {
         }
 
         case "watch.subscribe": {
-          logErr("[rpc] watch.subscribe called, attachments=" + Boolean(params.attachments));
+          if (debugPollLogs) {
+            logErr("[rpc] watch.subscribe called, attachments=" + Boolean(params.attachments));
+          }
           includeAttachments = Boolean(params.attachments);
           subscribed = true;
           subscriptionId = subscriptionId ?? `sub-${Date.now()}`;

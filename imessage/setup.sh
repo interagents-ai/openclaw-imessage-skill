@@ -78,6 +78,7 @@ fi
 
 NATIVE_CLIENT="$NATIVE_CLIENT" CONFIG_PATH="$CONFIG_PATH" node <<'NODE'
 const fs = require("fs");
+const os = require("os");
 const path = require("path");
 
 const configPath = process.env.CONFIG_PATH;
@@ -108,11 +109,12 @@ if (!cfg.channels.imessage.accounts.default || typeof cfg.channels.imessage.acco
 
 cfg.channels.imessage.accounts.default.cliPath = cliPath;
 if (!cfg.channels.imessage.accounts.default.service) cfg.channels.imessage.accounts.default.service = "auto";
+const homeDir = String(process.env.HOME || "").trim() || os.homedir();
 if (
   typeof cfg.channels.imessage.accounts.default.dbPath !== "string" ||
   !cfg.channels.imessage.accounts.default.dbPath.trim()
 ) {
-  cfg.channels.imessage.accounts.default.dbPath = `${process.env.HOME}/Library/Messages/chat.db`;
+  cfg.channels.imessage.accounts.default.dbPath = path.join(homeDir, "Library", "Messages", "chat.db");
 }
 
 fs.mkdirSync(path.dirname(configPath), { recursive: true });
