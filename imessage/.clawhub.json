@@ -1,6 +1,6 @@
 {
   "name": "imessage",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Native macOS iMessage integration using AppleScript and SQLite polling. Two-way messaging with image attachment support (HEIC auto-conversion).",
   "author": "Molty Team (Main, Parts, SD, TH)",
   "license": "MIT",

@@ -710,7 +710,8 @@ function buildMessageObject(row, includeAttachments) {
 
 async function runRpcServer({ dbPath }) {
   let subscribed = false;
-  let includeAttachments = false;
+  // Default to true for compatibility: older gateway callers may omit params.attachments.
+  let includeAttachments = true;
   let subscriptionId = null;
   let pollTimer = null;
   const debugPollLogs = isTruthyEnv(process.env.OPENCLAW_IMESSAGE_DEBUG);
@@ -820,15 +821,20 @@ async function runRpcServer({ dbPath }) {
         const attachmentPath = normalizeAttachmentPath(filename);
         if (attachmentPath) {
           let missing = false;
+          let accessError = "";
           try {
             await fs.access(attachmentPath);
           } catch (err) {
-            if (err && typeof err === "object" && "code" in err && err.code === "ENOENT") missing = true;
+            // Keep attachment metadata even when file isn't directly readable yet.
+            // This allows OpenClaw to emit proper media placeholders and diagnostics.
+            missing = true;
+            accessError = err instanceof Error ? err.message : String(err);
           }
 
           let normalizedMime = normalizeMimeType(mimeType, attachmentPath);
           if (!normalizedMime) normalizedMime = await sniffMimeTypeFromFilePath(attachmentPath);
 
+          const originalPath = attachmentPath;
           let finalPath = attachmentPath;
           let finalMime = normalizedMime;
           if (finalMime === "image/heic" || finalMime === "image/heif") {
@@ -836,14 +842,22 @@ async function runRpcServer({ dbPath }) {
             if (converted) {
               finalPath = converted;
               finalMime = "image/jpeg";
+              missing = false;
             }
           }
 
+          const fileName = path.basename(String(finalPath || originalPath || ""));
           byId.get(messageId).attachments.push({
+            // Legacy-compatible keys expected by OpenClaw media loaders.
+            id: attachmentId || undefined,
+            path: finalPath || undefined,
+            filename: fileName || undefined,
+            // Extra diagnostics keys.
             attachment_id: attachmentId || undefined,
-            original_path: finalPath,
+            original_path: originalPath || undefined,
             mime_type: finalMime || undefined,
             missing,
+            access_error: accessError || undefined,
           });
         }
       }
@@ -905,10 +919,14 @@ async function runRpcServer({ dbPath }) {
         }
 
         case "watch.subscribe": {
+          const wantsAttachments =
+            params && Object.prototype.hasOwnProperty.call(params, "attachments")
+              ? Boolean(params.attachments)
+              : true;
           if (debugPollLogs) {
-            logErr("[rpc] watch.subscribe called, attachments=" + Boolean(params.attachments));
+            logErr("[rpc] watch.subscribe called, attachments=" + wantsAttachments);
           }
-          includeAttachments = Boolean(params.attachments);
+          includeAttachments = wantsAttachments;
           subscribed = true;
           subscriptionId = subscriptionId ?? `sub-${Date.now()}`;
           startPolling();

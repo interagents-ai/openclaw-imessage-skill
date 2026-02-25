@@ -10,8 +10,8 @@
 
 ```bash
 mkdir -p ~/.openclaw/skills
-curl -fL -o /tmp/imessage-1.0.3.skill https://github.com/interagents-ai/openclaw-imessage-skill/releases/download/v1.0.3/imessage-1.0.3.skill
-unzip -o /tmp/imessage-1.0.3.skill -d ~/.openclaw/skills
+curl -fL -o /tmp/imessage-1.0.4.skill https://github.com/interagents-ai/openclaw-imessage-skill/releases/download/v1.0.4/imessage-1.0.4.skill
+unzip -o /tmp/imessage-1.0.4.skill -d ~/.openclaw/skills
 ```
 
 ## Step 2: Configure Runtime (Poller + Converter)
@@ -93,6 +93,10 @@ Press **Ctrl+C** to stop.
 
 **Fix:** This is macOS privacy (TCC). Grant Full Disk Access to your terminal app.  
 If gateway runs as LaunchAgent, grant Full Disk Access to its runtime binary too (usually `node`), then restart gateway.
+
+### Agent sees media placeholders but no actual images
+
+**Fix:** Upgrade to `v1.0.4+` and rerun setup. This version restores legacy-compatible attachment fields (`path`, `id`, `filename`) expected by OpenClaw media loaders.
 
 ### "Messages got an error"
 
