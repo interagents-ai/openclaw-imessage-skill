@@ -10,8 +10,8 @@
 
 ```bash
 mkdir -p ~/.openclaw/skills
-curl -fL -o /tmp/imessage-1.0.4.skill https://github.com/interagents-ai/openclaw-imessage-skill/releases/download/v1.0.4/imessage-1.0.4.skill
-unzip -o /tmp/imessage-1.0.4.skill -d ~/.openclaw/skills
+curl -fL -o /tmp/imessage-1.0.5.skill https://github.com/interagents-ai/openclaw-imessage-skill/releases/download/v1.0.5/imessage-1.0.5.skill
+unzip -o /tmp/imessage-1.0.5.skill -d ~/.openclaw/skills
 ```
 
 ## Step 2: Configure Runtime (Poller + Converter)
@@ -23,6 +23,7 @@ unzip -o /tmp/imessage-1.0.4.skill -d ~/.openclaw/skills
 What this does:
 - Sets `channels.imessage.accounts.default.cliPath` to `~/.openclaw/skills/imessage/native-applescript.mjs`
 - Enables iMessage channel + default account
+- Sets DM policy to `open` with `allowFrom=["*"]` (no pairing prompt for customer DMs)
 - Uses the built-in SQLite poller in `native-applescript.mjs`
 - Enables HEIC converter flow (`sips` first, ImageMagick fallback)
 
@@ -93,6 +94,15 @@ Press **Ctrl+C** to stop.
 
 **Fix:** This is macOS privacy (TCC). Grant Full Disk Access to your terminal app.  
 If gateway runs as LaunchAgent, grant Full Disk Access to its runtime binary too (usually `node`), then restart gateway.
+
+### Re-enable pairing mode (optional)
+
+If you want owner approval flow instead of open DMs:
+
+```bash
+~/.openclaw/skills/imessage/setup.sh --dm-policy pairing
+openclaw gateway restart
+```
 
 ### Agent sees media placeholders but no actual images
 

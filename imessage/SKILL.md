@@ -47,8 +47,8 @@ The Mac must grant these permissions to **Terminal** (or your shell app):
 
 ```bash
 mkdir -p ~/.openclaw/skills
-curl -fL -o /tmp/imessage-1.0.4.skill https://github.com/interagents-ai/openclaw-imessage-skill/releases/download/v1.0.4/imessage-1.0.4.skill
-unzip -o /tmp/imessage-1.0.4.skill -d ~/.openclaw/skills
+curl -fL -o /tmp/imessage-1.0.5.skill https://github.com/interagents-ai/openclaw-imessage-skill/releases/download/v1.0.5/imessage-1.0.5.skill
+unzip -o /tmp/imessage-1.0.5.skill -d ~/.openclaw/skills
 ```
 
 ### 2. Configure runtime (poller + converter)
@@ -60,6 +60,7 @@ unzip -o /tmp/imessage-1.0.4.skill -d ~/.openclaw/skills
 This sets `cliPath` to this skill's `native-applescript.mjs`, which includes:
 - SQLite poller for inbound messages
 - HEIC converter (`sips`, with ImageMagick fallback)
+- DM policy defaults to `open` with `allowFrom=["*"]` (no pairing prompt)
 
 ### 3. Grant Permissions
 

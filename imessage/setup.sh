@@ -3,7 +3,7 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: setup.sh [--config <path>] [--state-dir <path>] [--no-db-check]
+Usage: setup.sh [--config <path>] [--state-dir <path>] [--no-db-check] [--dm-policy <policy>]
 
 Configures OpenClaw iMessage to use this skill's native poller + converter runtime.
 EOF
@@ -13,6 +13,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 STATE_DIR="${OPENCLAW_STATE_DIR:-$HOME/.openclaw}"
 CONFIG_PATH="${OPENCLAW_CONFIG_PATH:-$STATE_DIR/openclaw.json}"
 CHECK_DB_ACCESS=1
+DM_POLICY="${OPENCLAW_IMESSAGE_DM_POLICY:-open}"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -27,6 +28,10 @@ while [[ $# -gt 0 ]]; do
     --no-db-check)
       CHECK_DB_ACCESS=0
       shift
+      ;;
+    --dm-policy)
+      DM_POLICY="${2:-}"
+      shift 2
       ;;
     -h|--help)
       usage
@@ -44,6 +49,14 @@ if [[ "$(uname -s)" != "Darwin" ]]; then
   echo "This installer supports macOS only." >&2
   exit 1
 fi
+
+case "$DM_POLICY" in
+  pairing|allowlist|open|disabled) ;;
+  *)
+    echo "Invalid dm policy: $DM_POLICY (expected: pairing|allowlist|open|disabled)" >&2
+    exit 1
+    ;;
+esac
 
 NATIVE_CLIENT="$SCRIPT_DIR/native-applescript.mjs"
 CONVERTER="$SCRIPT_DIR/convert-heic.sh"
@@ -76,13 +89,14 @@ if [[ ! -f "$CONFIG_PATH" ]]; then
   echo "{}" > "$CONFIG_PATH"
 fi
 
-NATIVE_CLIENT="$NATIVE_CLIENT" CONFIG_PATH="$CONFIG_PATH" node <<'NODE'
+NATIVE_CLIENT="$NATIVE_CLIENT" CONFIG_PATH="$CONFIG_PATH" DM_POLICY="$DM_POLICY" node <<'NODE'
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
 
 const configPath = process.env.CONFIG_PATH;
 const cliPath = process.env.NATIVE_CLIENT;
+const dmPolicy = String(process.env.DM_POLICY || "open").trim();
 
 let cfg = {};
 try {
@@ -99,6 +113,7 @@ if (!cfg.channels.imessage || typeof cfg.channels.imessage !== "object") cfg.cha
 cfg.channels.imessage.enabled = true;
 cfg.channels.imessage.cliPath = cliPath;
 if (!cfg.channels.imessage.service) cfg.channels.imessage.service = "auto";
+cfg.channels.imessage.dmPolicy = dmPolicy;
 
 if (!cfg.channels.imessage.accounts || typeof cfg.channels.imessage.accounts !== "object") {
   cfg.channels.imessage.accounts = {};
@@ -109,6 +124,7 @@ if (!cfg.channels.imessage.accounts.default || typeof cfg.channels.imessage.acco
 
 cfg.channels.imessage.accounts.default.cliPath = cliPath;
 if (!cfg.channels.imessage.accounts.default.service) cfg.channels.imessage.accounts.default.service = "auto";
+cfg.channels.imessage.accounts.default.dmPolicy = dmPolicy;
 const homeDir = String(process.env.HOME || "").trim() || os.homedir();
 if (
   typeof cfg.channels.imessage.accounts.default.dbPath !== "string" ||
@@ -117,10 +133,16 @@ if (
   cfg.channels.imessage.accounts.default.dbPath = path.join(homeDir, "Library", "Messages", "chat.db");
 }
 
+if (dmPolicy === "open") {
+  cfg.channels.imessage.allowFrom = ["*"];
+  cfg.channels.imessage.accounts.default.allowFrom = ["*"];
+}
+
 fs.mkdirSync(path.dirname(configPath), { recursive: true });
 fs.writeFileSync(configPath, JSON.stringify(cfg, null, 2) + "\n");
 console.log(`Updated ${configPath}`);
 console.log(`iMessage cliPath -> ${cliPath}`);
+console.log(`iMessage dmPolicy -> ${dmPolicy}`);
 NODE
 
 "$NATIVE_CLIENT" rpc --help >/dev/null

@@ -8,8 +8,8 @@ Native macOS iMessage integration using AppleScript and SQLite polling.
 
 ```bash
 mkdir -p ~/.openclaw/skills
-curl -fL -o /tmp/imessage-1.0.4.skill https://github.com/interagents-ai/openclaw-imessage-skill/releases/download/v1.0.4/imessage-1.0.4.skill
-unzip -o /tmp/imessage-1.0.4.skill -d ~/.openclaw/skills
+curl -fL -o /tmp/imessage-1.0.5.skill https://github.com/interagents-ai/openclaw-imessage-skill/releases/download/v1.0.5/imessage-1.0.5.skill
+unzip -o /tmp/imessage-1.0.5.skill -d ~/.openclaw/skills
 ```
 
 ### 2. Run setup (configures poller + converter runtime)
@@ -17,6 +17,8 @@ unzip -o /tmp/imessage-1.0.4.skill -d ~/.openclaw/skills
 ```bash
 ~/.openclaw/skills/imessage/setup.sh
 ```
+
+By default this enables public DMs (`dmPolicy=open`) so customers do not need pairing approval.
 
 ### 3. Grant Permissions
 
